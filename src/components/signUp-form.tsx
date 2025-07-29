@@ -16,6 +16,10 @@ import {
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import Link from "next/link";
+import { signUp } from "../lib/auth-client";
+import { redirect } from "next/navigation";
+import { CircleAlert, XIcon } from "lucide-react";
+import { toast } from "sonner";
 
 const formSchema = z
   .object({
@@ -68,9 +72,87 @@ export function SignUpForm({
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
-      // Simule un délai réseau ou remplace par ton appel API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log(data);
+      await signUp.email(
+        {
+          name: data.name,
+          email: data.email,
+          password: data.password,
+        },
+        {
+          onSuccess: () => {
+            redirect("/");
+          },
+          onError: (error) => {
+            console.error("Erreur lors de l'inscription :", error);
+
+            if (error.error.code === "USER_ALREADY_EXISTS") {
+              toast.custom((t) => (
+                <div className="bg-background text-foreground w-full rounded-md border px-4 py-3 shadow-lg sm:w-[var(--width)]">
+                  <div className="flex gap-2">
+                    <div className="flex grow gap-3">
+                      <CircleAlert
+                        className="mt-0.5 shrink-0 text-red-500"
+                        size={16}
+                        aria-hidden="true"
+                      />
+                      <div className="flex flex-col">
+                        <p>Une erreur est survenue</p>
+                        <div className="text-sm whitespace-nowrap text-muted-foreground">
+                          L'adresse email est déjà utilisée.
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      className="group -my-1.5 -me-2 size-8 shrink-0 p-0 hover:bg-transparent cursor-pointer"
+                      onClick={() => toast.dismiss(t)}
+                      aria-label="Close banner"
+                    >
+                      <XIcon
+                        size={16}
+                        className="opacity-60 transition-opacity group-hover:opacity-100 "
+                        aria-hidden="true"
+                      />
+                    </Button>
+                  </div>
+                </div>
+              ));
+            } else {
+              toast.custom((t) => (
+                <div className="bg-background text-foreground w-full rounded-md border px-4 py-3 shadow-lg sm:w-[var(--width)]">
+                  <div className="flex gap-2">
+                    <div className="flex grow gap-3">
+                      <CircleAlert
+                        className="mt-0.5 shrink-0 text-red-500"
+                        size={16}
+                        aria-hidden="true"
+                      />
+                      <div className="flex flex-col">
+                        <p>Une erreur est survenue</p>
+                        <div className="text-sm whitespace-nowrap text-muted-foreground">
+                          Veuillez réessayer plus tard.
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      className="group -my-1.5 -me-2 size-8 shrink-0 p-0 hover:bg-transparent cursor-pointer"
+                      onClick={() => toast.dismiss(t)}
+                      aria-label="Close banner"
+                    >
+                      <XIcon
+                        size={16}
+                        className="opacity-60 transition-opacity group-hover:opacity-100"
+                        aria-hidden="true"
+                      />
+                    </Button>
+                  </div>
+                </div>
+              ));
+            }
+          },
+        }
+      );
     } finally {
       setLoading(false);
     }

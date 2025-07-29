@@ -1,16 +1,34 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "./button";
+import { useSession, signOut } from "@/src/lib/auth-client";
+import { redirect } from "next/navigation";
+import { Spinner } from "./spinner";
 
 export const AuthButton = () => {
-  // const user = null;
+  const { data: session, isPending } = useSession();
+  const [loading, setLoading] = useState(false);
 
-  const user = {
-    name: "John Doe",
-    email: "john.doe@example.com",
-    avatar: "https://example.com/avatar.jpg",
-  };
+  if (isPending) {
+    return (
+      <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-2 sm:space-y-0 md:w-fit">
+        <Button asChild variant="outline" size="sm">
+          <Link href="/sign-in">
+            Chargement... <Spinner variant="circle" />
+          </Link>
+        </Button>
+        <Button asChild size="sm">
+          <Link href="/sign-in">
+            Chargement... <Spinner variant="circle" />
+          </Link>
+        </Button>
+      </div>
+    );
+  }
 
-  if (!user) {
+  if (!session?.user) {
     return (
       <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-2 sm:space-y-0 md:w-fit">
         <Button asChild variant="outline" size="sm">
@@ -26,6 +44,17 @@ export const AuthButton = () => {
       </div>
     );
   }
+
+  const handleSignOut = async () => {
+    setLoading(true);
+    try {
+      await signOut();
+      redirect("/");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-2 sm:space-y-0 md:w-fit">
       <Button asChild variant="outline" size="sm">
@@ -34,12 +63,12 @@ export const AuthButton = () => {
         </Link>
       </Button>
       <Button
-        asChild
         size="sm"
         className="cursor-pointer"
-        onClick={() => console.log("déconnexion réussite")}
+        onClick={handleSignOut}
+        disabled={loading}
       >
-        <span>Se déconnecter</span>
+        <span>{loading ? "Déconnexion..." : "Se déconnecter"}</span>
       </Button>
     </div>
   );
